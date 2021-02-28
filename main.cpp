@@ -1,6 +1,5 @@
 #include <SFML/Window.hpp>
 #include <SFML/Graphics.hpp>
-#include <iostream>
 #include <vector>
 
 // Draws the chess board on the screen
@@ -43,7 +42,7 @@ sf::RectangleShape DrawSelectedSquare(sf::RenderWindow &window, sf::Event event)
 
 int main()
 {
-    sf::RenderWindow window(sf::VideoMode(600, 600), "Chess");
+    sf::RenderWindow window(sf::VideoMode(600, 600), "Chess", sf::Style::Close);
 
     std::vector<std::vector<sf::RectangleShape>> squares;
     sf::RectangleShape selected_square;
