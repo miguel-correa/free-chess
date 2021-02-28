@@ -19,5 +19,5 @@ if(SFML_FOUND)
     message(STATUS "SFML_VERSION: ${SFML_VERSION}")
 endif()
 
-add_executable(Chess main.cpp)
-target_link_libraries (Chess sfml-graphics sfml-window sfml-system)
+add_executable(Chess main.cpp GameState.cpp GameState.h)
+target_link_libraries (Chess sfml-graphics sfml-window sfml-system stdc++fs)
