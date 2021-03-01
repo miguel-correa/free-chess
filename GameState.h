@@ -10,6 +10,7 @@ class GameState {
     public:
         GameState();
         std::vector<std::vector<std::string>> GetGameState();
+        void ChangeSquare(int rank, int file, std::string new_state);
 };
 
 

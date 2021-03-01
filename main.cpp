@@ -3,6 +3,7 @@
 #include <vector>
 #include <map>
 #include <experimental/filesystem>
+#include <iostream>
 #include "GameState.h"
 
 
@@ -58,7 +59,7 @@ void DrawBoard(sf::RenderWindow &window)
     }
 }
 
-// Creates a sprite for a piece found on the board
+// Creates a sprite for the input piece
 sf::Sprite NewSprite(std::string piece_name)
 {
     sf::Sprite piece;
@@ -79,10 +80,10 @@ void DrawPieces(sf::RenderWindow &window, std::vector<std::vector<std::string>> 
     {
         for (int file = 0; file < 8; file++)
         {
-            if(board[rank][file] != "-")
+            if(board[file][rank] != "-")
             {
-                sf::Sprite piece = NewSprite(board[rank][file]);
-                piece.setPosition(file * 75, rank * 75);
+                sf::Sprite piece = NewSprite(board[file][rank]);
+                piece.setPosition(rank * 75, file * 75);
                 window.draw(piece);
             }
         }
@@ -102,28 +103,73 @@ sf::RectangleShape DrawSelectedSquare(sf::RenderWindow &window, sf::Event event)
     return selected_square;
 }
 
+// Returns a sprite of the selected piece at the event position
+sf::Sprite MovePiece(std::string selected_piece, sf::Event event)
+{
+    sf::Sprite piece = NewSprite(selected_piece);
+    if(event.type == sf::Event::MouseButtonPressed)
+        piece.setPosition(event.mouseButton.x - 75/2, event.mouseButton.y - 75/2);
+    else
+        piece.setPosition(event.mouseMove.x - 75/2, event.mouseMove.y - 75/2);
+
+    return piece;
+}
+
 int main()
 {
     LoadTextures();
     GameState game_state;
-    std::vector<std::vector<std::string>> curr_state = game_state.GetGameState();
-    sf::Sprite sprite;
-    sprite = NewSprite("wk");
+    std::vector<std::vector<std::string>> curr_state;
+
     sf::RenderWindow window(sf::VideoMode(600, 600), "Chess", sf::Style::Close);
 
     std::vector<std::vector<sf::RectangleShape>> squares;
     sf::RectangleShape selected_square;
+
+    std::string selected_piece;
+    sf::Sprite dragged_piece;
+
+    bool isPressed = false;
+
     while (window.isOpen())
     {
-        sf::Event event{};
+        curr_state = game_state.GetGameState();
+        sf::Event event;
         while (window.pollEvent(event))
         {
             // "close window" event
             if (event.type == sf::Event::Closed)
                 window.close();
 
-            if (event.type == sf::Event::MouseButtonReleased)
+            // When the mouse button is released, updates the new piece position and
+            // selects the square
+            // TODO: only select the square if it's the same square that the mouse was pressed down
+            if (event.type == sf::Event::MouseButtonReleased && event.mouseButton.button == sf::Mouse::Left)
+            {
+                if (isPressed) {
+                    isPressed = false;
+                    game_state.ChangeSquare(event.mouseButton.x / 75, event.mouseButton.y / 75, selected_piece);
+                }
+
                 selected_square = DrawSelectedSquare(window, event);
+            }
+
+
+            // If the left mouse button is pressed, removes the piece from the square
+            // and creates a sprite at the mouse location
+            if (event.type == sf::Event::MouseButtonPressed && event.mouseButton.button == sf::Mouse::Left)
+            {
+                isPressed = true;
+                selected_piece = curr_state[event.mouseButton.y / 75][event.mouseButton.x / 75];
+                game_state.ChangeSquare(event.mouseButton.x / 75, event.mouseButton.y / 75, "-");
+                dragged_piece = MovePiece(selected_piece, event);
+            }
+
+            // If the mouse is moving and the left button is down update the piece position
+            // to the mouse location
+            if (event.type == sf::Event::MouseMoved && isPressed)
+                if(isPressed)
+                    dragged_piece = MovePiece(selected_piece, event);
         }
 
         window.clear(sf::Color::Black);
@@ -131,8 +177,11 @@ int main()
         // Drawing loop
         DrawBoard(window);
         window.draw(selected_square);
-//        window.draw(sprite);
         DrawPieces(window, curr_state);
+
+        // If the left button is still pressed, draw the dragged piece at the mouse location
+        if(isPressed)
+            window.draw(dragged_piece);
 
         window.display();
     }
